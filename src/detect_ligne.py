@@ -23,7 +23,7 @@ for x in range(0, len(lines)):
     for x1,y1,x2,y2 in lines[x]:
         cv2.line(image,(x1,y1),(x2,y2),(0,255,0),2)
         theta=theta+math.atan2((y2-y1),(x2-x1))
-        #print(theta)
+        print(theta)
 threshold=6
 if(theta>threshold):
     print("left")
