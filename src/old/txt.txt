@@ -1,0 +1,1 @@
+g++  `pkg-config --cflags opencv4` -o detect_vid detect_vid.cpp  `pkg-config --libs opencv4`
