@@ -10,6 +10,12 @@
 #include <unistd.h>
 #include <semaphore.h>
 
+struct context_data{
+  int id;
+  int index_thread;
+  std::string data;
+  int flag;
+};
 
 /*
  extern std::string direction_ligne ;

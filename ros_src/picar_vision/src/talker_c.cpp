@@ -154,7 +154,6 @@ int main(int argc, char **argv)
         pthread_mutex_lock(&mutex_ligne);
         flag_direction = 0;
         pthread_mutex_unlock(&mutex_ligne);
-        fprintf(stderr, "nouvelle  direction \n");
         ss << direction_ligne;
         msg.data = ss.str();
     }else if (flag_panneau == 1){
@@ -163,7 +162,6 @@ int main(int argc, char **argv)
         ss << type_panneau;
         msg.data = ss.str();
         pthread_mutex_unlock(&mutex_panneau);
-        fprintf(stderr,"panneau detectee \n");
     }else{
         //fprintf(stderr, "nothing \n");
     }

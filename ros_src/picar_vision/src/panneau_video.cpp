@@ -17,7 +17,9 @@ extern pthread_mutex_t mutex_panneau ;
 
 Mat imgOri, imgGray, imgCanny, imgTraite, imgGauss, imgDilat, imgEro, imgCoupe;
 vector<Point> InitPoints, docPoints;
-VideoCapture camera(4);
+//VideoCapture camera(4);
+VideoCapture camera("udpsrc multicast-group=127.0.0.1 auto-multicast=true port=5001 ! application/x-rtp,media=video,payload=26,clock-rate=90000,encoding-name=JPEG ! rtpjpegdepay ! jpegdec ! videoconvert ! appsink",
+            CAP_GSTREAMER); // open the default camera
 //VideoCapture camera("-v udpsrc multicast-group=127.0.0.1 auto-multicast=true port=5001 ! application/x-rtp, media=video, clock-rate=90000, payload=96 ! rtpjpegdepay ! jpegdec ! videoconvert ! autovideosink ! appsink", CAP_GSTREAMER); // open the first camera>>>>
    
 //variables pour traitement HSV
@@ -88,7 +90,7 @@ vector<Point> getContours(Mat imgDilat)
 				
 				Rect mesROI(boundRect[i].x,boundRect[i].y,boundRect[i].width,boundRect[i].height);
                 imgCoupe = imgOri(mesROI);
-				imshow("Visualisation Image Coupe avant traitement", imgCoupe);
+				//imshow("Visualisation Image Coupe avant traitement", imgCoupe);
 				// identification avec texte
 				//putText(imgTraite, "Octogone", {boundRect[i].x, boundRect[i].y}, FONT_ITALIC, 0.5, Scalar(0,255,0), 1);
 				
@@ -96,7 +98,7 @@ vector<Point> getContours(Mat imgDilat)
 				type_panneau = "trouve";
 				flag_panneau = 1;
 				pthread_mutex_unlock(&mutex_panneau);
-			
+				//fprintf(stderr, "panneau \n");
 
             }
 				
@@ -119,14 +121,15 @@ void ModCouleurHSV(int, void*)
 	//cout << hmin << ','<< smin << ','<< vmin << ','<< hmax << ','<< smax << ','<< vmax << ','<<endl;
 	// Contours (trouver le plus grand aire)
 	InitPoints = getContours(masK);
-	imshow("Image en HSV", imgHSV);
-    imshow("Image Filtré", masK);
+	//imshow("Image en HSV", imgHSV);
+    //imshow("Image Filtré", masK);
 }
 
 
 
 void *detect_panneau(void *threadid){
 
+	/*
     namedWindow("Trakbar Window", (450, 200));
 	//HSV ==> Ne fonctione pas avec la fonction findcontours ==> probleme format image non compatible
     createTrackbar("Hue min","Trakbar Window", &hmin, 179);
@@ -137,6 +140,7 @@ void *detect_panneau(void *threadid){
 	
 	createTrackbar("Value min","Trakbar Window", &vmin, 255);
 	createTrackbar("Value min","Trakbar Window", &vmax, 255);
+	*/
 
     while(camera.isOpened())
     {
@@ -145,7 +149,7 @@ void *detect_panneau(void *threadid){
         imgTraite = imgOri;
 
         ModCouleurHSV(0,0);
-        imshow("Visualisation Image Originale", imgOri);
+        //imshow("Visualisation Image Originale", imgOri);
 	    if(waitKey(1) == 'q')
         {
             break;

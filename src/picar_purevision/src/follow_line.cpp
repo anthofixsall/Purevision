@@ -34,28 +34,26 @@ void *PrintHello(void *threadid){
 }
 
 void *detect_ligne(void *threadid){
+   
+    struct context_data *data = (struct context_data*)threadid;
 
     Mat frame;
     cout << "Opening camera..." << endl;
-    VideoCapture capture(0);
-    //VideoCapture capture("-v udpsrc multicast-group=127.0.0.1 auto-multicast=true port=5000 ! application/x-rtp, media=video, clock-rate=90000, payload=96 ! rtpjpegdepay ! jpegdec ! videoconvert ! autovideosink ! appsink", CAP_GSTREAMER); // open the first camera>>>>
-    //VideoCapture cap("udpsrc uri=udp://127.0.1.1:5000 auto-multicast=true ! application/x-rtp, media=video, encoding-name=H264 ! rtpjitterbuffer latency=300 ! rtph264depay ! decodebin ! videoconvert ! video/x-raw, format=BGR ! appsink", cv::CAP_GSTREAMER);
-     //VideoCapture capture("udpsrc port=5000 ! application/x-rtp,media=video,payload=26,clock-rate=90000,encoding-name=JPEG ! rtpjpegdepay ! jpegdec ! videoconvert ! appsink",CAP_GSTREAMER);
+    VideoCapture capture("udpsrc multicast-group=127.0.0.1 auto-multicast=true port=5000 ! application/x-rtp,media=video,payload=26,clock-rate=90000,encoding-name=JPEG,framerate=30/1 ! rtpjpegdepay ! jpegdec ! videoconvert ! appsink",
+            CAP_GSTREAMER); // open the default camera
     if (!capture.isOpened())
     {
         cerr << "ERROR: Can't initialize camera capture" << endl;
         pthread_exit(NULL);
     }
-    capture.set(CAP_PROP_FPS,30);
-    capture.set(CAP_PROP_FRAME_WIDTH, 640);
-    capture.set(CAP_PROP_FRAME_HEIGHT, 480);
+    
+    //capture.set(CAP_PROP_FPS,30);
+    //capture.set(CAP_PROP_FRAME_WIDTH, 640);
+   // capture.set(CAP_PROP_FRAME_HEIGHT, 480);
 
-    cout << "Frame width: " << capture.get(CAP_PROP_FRAME_WIDTH) << endl;
-    cout << "     height: " << capture.get(CAP_PROP_FRAME_HEIGHT) << endl;
-    cout << "Capturing FPS: " << capture.get(CAP_PROP_FPS) << endl;
-
-    cout << endl << "Press 'ESC' to quit, 'space' to toggle frame processing" << endl;
-    cout << endl << "Start grabbing..." << endl;
+    //cout << "Frame width: " << capture.get(CAP_PROP_FRAME_WIDTH) << endl;
+    //cout << "     height: " << capture.get(CAP_PROP_FRAME_HEIGHT) << endl;
+    //cout << "Capturing FPS: " << capture.get(CAP_PROP_FPS) << endl;
 
     size_t nFrames = 0;
     bool enableProcessing = false;
@@ -124,27 +122,26 @@ void *detect_ligne(void *threadid){
             if(theta > threshold){
                 //fprintf(stderr, " left \n");
                 pthread_mutex_lock(&mutex_ligne);
-                direction_ligne = "left";
+                 direction_ligne = "left";
                 flag_direction = 1;
                 pthread_mutex_unlock(&mutex_ligne);
-            }else if(theta <threshold){
+            }else if(theta < threshold){
                 //fprintf(stderr, " right \n");
-                pthread_mutex_lock(&mutex_ligne);
+                pthread_mutex_lock(&mutex_ligne);  
                 direction_ligne = "right";
                 flag_direction = 1;
                 pthread_mutex_unlock(&mutex_ligne);
             }else if( abs(theta) < threshold){
                 //fprintf(stderr, " straight \n");
-
                 pthread_mutex_lock(&mutex_ligne);
                 direction_ligne = "straight";
                 flag_direction = 1;
                 pthread_mutex_unlock(&mutex_ligne);
             }
         }
-        namedWindow( "Source", 1 );
-        imshow( "Source", frame );
-        imshow("croped", img_crop);
+        //namedWindow( "Source", 1 );
+        //imshow( "Source", frame );
+        //imshow("croped", img_crop);
         
         int key = waitKey(1);
         if (key == 27/*ESC*/)
