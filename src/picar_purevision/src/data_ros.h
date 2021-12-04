@@ -14,6 +14,7 @@ struct context_data{
   int id;
   int index_thread;
   std::string data;
+  char msg[50];
   int flag;
 };
 

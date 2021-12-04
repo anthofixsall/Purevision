@@ -95,7 +95,7 @@ vector<Point> getContours(Mat imgDilat)
 				//putText(imgTraite, "Octogone", {boundRect[i].x, boundRect[i].y}, FONT_ITALIC, 0.5, Scalar(0,255,0), 1);
 				
 				pthread_mutex_lock(&mutex_panneau);
-				type_panneau = "trouve";
+				// = "trouve";
 				flag_panneau = 1;
 				pthread_mutex_unlock(&mutex_panneau);
 				//fprintf(stderr, "Panneau  \n");
@@ -131,9 +131,10 @@ void ModCouleurHSV(int, void*)
 void *detect_panneau(void *threadid){
 
 	struct context_data *data = (context_data *)threadid;
+	fprintf(stderr, "data_panneau:%p \n",&data);
 
 	/*
-
+	
     namedWindow("Trakbar Window", (450, 200));
 	//HSV ==> Ne fonctione pas avec la fonction findcontours ==> probleme format image non compatible
     createTrackbar("Hue min","Trakbar Window", &hmin, 179);
@@ -148,11 +149,14 @@ void *detect_panneau(void *threadid){
     while(camera.isOpened())
     {
         camera.read(imgOri);	
-
         imgTraite = imgOri;
-
         ModCouleurHSV(0,0);
         //imshow("Visualisation Image Originale", imgOri);
+		pthread_mutex_lock(&mutex_panneau);
+		//data->data = "straight";
+		data->flag = 1;
+		data->data = "tes";
+		pthread_mutex_unlock(&mutex_panneau);
 	    if(waitKey(1) == 'q')
         {
             break;

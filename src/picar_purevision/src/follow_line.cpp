@@ -35,7 +35,8 @@ void *PrintHello(void *threadid){
 
 void *detect_ligne(void *threadid){
    
-    struct context_data *data = (struct context_data*)threadid;
+    struct context_data *data = (struct context_data*)malloc(sizeof(struct context_data ));
+    data = (struct context_data*)threadid;
 
     Mat frame;
     cout << "Opening camera..." << endl;
@@ -118,24 +119,25 @@ void *detect_ligne(void *threadid){
             //fprintf(stderr, "theat %f  \n", theta);
         }
         {
+             fprintf(stderr, "data_follow:%p \n",&data);
             float threshold = 6;
             if(theta > threshold){
-                //fprintf(stderr, " left \n");
+                fprintf(stderr, " left \n");
                 pthread_mutex_lock(&mutex_ligne);
-                 direction_ligne = "left";
-                flag_direction = 1;
+                data->data = "left";
+                data->flag = 1;
                 pthread_mutex_unlock(&mutex_ligne);
             }else if(theta < threshold){
-                //fprintf(stderr, " right \n");
+                fprintf(stderr, " right \n");
                 pthread_mutex_lock(&mutex_ligne);  
-                direction_ligne = "right";
-                flag_direction = 1;
+                data->data = "right";
+                data->flag = 1;
                 pthread_mutex_unlock(&mutex_ligne);
             }else if( abs(theta) < threshold){
-                //fprintf(stderr, " straight \n");
+                fprintf(stderr, " straight \n");
                 pthread_mutex_lock(&mutex_ligne);
-                direction_ligne = "straight";
-                flag_direction = 1;
+                data->data = "straight";
+                data->flag = 1;
                 pthread_mutex_unlock(&mutex_ligne);
             }
         }
