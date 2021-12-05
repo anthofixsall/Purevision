@@ -7,7 +7,7 @@ Purevision est un projet qui consite à transformer une picar en une voiture aut
 
 ## Materiels nécessaire 
 ---------------------------------
-* Picar 4wd
+* kit Picar 4wd
 * Raspberry 4 
 * camera raspberry ou webcam usb
 * Carte SD 64 GB
@@ -147,6 +147,9 @@ pkg-config --modversion opencv4
 
 ### 3. installation de ROS
 
+suivre le tuto suivant:
+
+http://wiki.ros.org/noetic/Installation/Ubuntu
 
 ### 4. installation de raspicam 
  * Modifier le config.txt
@@ -171,5 +174,47 @@ sudo dpkg -i /tmp/raspi-config_20200601_all.deb
 ```
 
 
+## Installation de picar 4wd
 
 
+installer les paquets suivant pour les scripts pythons 
+```
+sudo apt-get install python3-catkin-pkg-modules
+sudo apt-get install python3-rospkg-modules
+sudo apt-get install python3-rospy
+
+source /opt/ros/noetic/setup.bash
+```
+
+
+## premision 
+donner acces au gpio 
+
+```
+groupadd gpio
+usermod -a -G gpio ubuntu
+sudo adduser ubuntu gpio
+
+sudo chown root.gpio /dev/gpiomem
+sudo chown root.gpio /dev/mem
+sudo chmod g+rw /dev/gpiomem
+sudo chmod g+rw /dev/mem
+```
+
+Pour éviter d ela refaire à chaque fois, il est possible de l'ecire en dur avec les commandes suivantes:
+
+```
+echo "sudo chown root.gpio /dev/gpiomem" >> ~/.bashrc
+echo "sudo chmod g+rw /dev/gpiomem" >> ~/.bashrc
+echo "sudo chown root.gpio /dev/mem " >> ~/.bashrc
+echo "sudo chmod g+rw /dev/mem" >> ~/.bashrc
+```
+
+voire également les liens suivants :
+
+
+https://forums.raspberrypi.com/viewtopic.php?t=58782
+----
+
+https://raspberrypi.stackexchange.com/questions/40105/access-gpio-pins-without-root-no-access-to-dev-mem-try-running-as-root
+----

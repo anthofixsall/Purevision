@@ -84,24 +84,19 @@ int main(int argc, char **argv)
          fprintf(stderr,"\n mutex init ligne failed\n");
     }
 
-        rc = pthread_create(&threads[0], NULL, PrintHello, (void *)1);
-        if (rc){
-            printf("ERROR; return code from pthread_create() is %d\n", rc);
-            exit(-1);
-            }
     
-        rc = pthread_create(&threads[1], NULL, detect_panneau, (void *)4);
-        if (rc){
-          printf("ERROR; return code from pthread_create() is %d\n", rc);
-          exit(-1);
-        }
-        //direction_ligne = "test";
+    rc = pthread_create(&threads[1], NULL, detect_panneau, (void *)4);
+    if (rc){
+      printf("ERROR; return code from pthread_create() is %d\n", rc);
+      exit(-1);
+    }
+    //direction_ligne = "test";
 
-        rc = pthread_create(&threads[2], NULL, detect_ligne, (void *)4);
-        if (rc){
-             printf("ERROR; return code from pthread_create() is %d\n", rc);
-            exit(-1);
-        }
+    rc = pthread_create(&threads[2], NULL, detect_ligne, (void *)4);
+    if (rc){
+          printf("ERROR; return code from pthread_create() is %d\n", rc);
+        exit(-1);
+    }
 
   /**
    * NodeHandle is the main access point to communications with the ROS system.

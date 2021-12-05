@@ -16,23 +16,6 @@ extern pthread_mutex_t mutex_ligne ;
 extern pthread_mutex_t mutex_panneau ;
 
 
-void *PrintHello(void *threadid){
-   long tid;
-   double  temp;
-   double dtemps;
-   tid = (long)threadid;
-   struct  timespec ts;
-    clock_gettime(CLOCK_REALTIME, &ts);
-    dtemps = (double)ts.tv_sec + (double)ts.tv_nsec * 0.000000001;
-    printf("Hello World! It's me, thread #%ld!\n", tid);
-    while(1){
-        dtemps += 2.0;
-        temp = Procedurecomptage(dtemps);
-        printf("It's me, thread  after 2 s #%ld!\n", tid);
-    }
-   pthread_exit(NULL);
-}
-
 void *detect_ligne(void *threadid){
 
     Mat frame;
