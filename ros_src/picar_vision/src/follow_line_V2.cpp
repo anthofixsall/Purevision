@@ -136,30 +136,11 @@ void *detect_ligne(void *threadid){
         cv::cvtColor(img_crop, color_gray, cv::COLOR_BGR2GRAY);
         cv::GaussianBlur(color_gray, gaussian, Size(5, 5), 0);
         cv::Canny(gaussian, canny, 85, 85, 3);
-        imshow("Masque Gaussien + Canny", canny);
-        Mat conv_canny;
-        conv_canny.create(canny.rows, canny.cols, CV_8U);
-        imshow("Masque Gaussien + Canny", canny);
-        for (y = 0; y < canny.rows; y++)
-        {
-            for (x = 0; x < canny.cols; x++)
-            {
-                if ((frame.at<u_char>(y, x)[y] == 1)
-                {
-                    conv_canny.at<uchar>(y, x) = 255;
-                }
-                else
-                {
-                    conv_canny.at<uchar>(y, x) = 0;
-                }
-            }
-        }
+        imshow("Masque Gaussien + Canny", gaussian);
 
-        Mat masque;
-        //bitwise_or(color_rvb, canny, masque);
-        bitwise_or(canny, color_rvb, masque);
-
-        //imshow("masque ", masque);              //affichage de l'image avec un filtrage RVB  et HSV
+        Mat masque;s
+        cv::bitwise_or(color_rvb, canny, masque);
+        imshow("masque ", masque);              //affichage de l'image avec un filtrage RVB  et HSV
 
         processingTime += cv::getTickCount() - tp0;
 

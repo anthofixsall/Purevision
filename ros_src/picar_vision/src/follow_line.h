@@ -14,6 +14,7 @@
 #include "data_ros.h"
 
 
+void *PrintHello(void *threadid);
 void *detect_ligne(void *threadid);
    
 

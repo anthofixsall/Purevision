@@ -94,16 +94,6 @@ void *detect_ligne(void *threadid){
 
         Mat img_crop;
         //cv::Canny(f rame, processed, 200, 1000, 5);
-        //**************** Traitement RVB *****************
-        int iRmin = 0, iRmax = 33, iVmin = 23, iVmax = 57, iBmin = 19, iBmax = 255; // Rouge
-        unsigned char Rmin, Rmax, Vmin, Vmax, Bmin, Bmax;
-        int x, y;
-        Rmin = (unsigned char)iRmin;
-        Rmax = (unsigned char)iRmax;
-        Vmin = (unsigned char)iVmin;
-        Vmax = (unsigned char)iVmax;
-        Bmin = (unsigned char)iBmin;
-        Bmax = (unsigned char)iBmax;
 
         //**************** crop ***************************
         const int cropSize = 256;
@@ -114,56 +104,15 @@ void *detect_ligne(void *threadid){
         img_crop = frame(roi).clone();
 
         //******************* traitement **********************
-        Mat canny, gaussian, color_gray, color_rvb;
-
-
-        color_rvb.create(frame.rows, frame.cols, CV_8U);
-        for (y = 0; y < frame.rows; y++)
-        {
-            for (x = 0; x < frame.cols; x++)
-            {
-                if ((frame.at<cv::Vec3b>(y, x)[0] >= Bmin) && (frame.at<cv::Vec3b>(y, x)[0] <= Bmax) && (frame.at<cv::Vec3b>(y, x)[1] >= Vmin) && (frame.at<cv::Vec3b>(y, x)[1] <= Vmax) && (frame.at<cv::Vec3b>(y, x)[2] >= Rmin) && (frame.at<cv::Vec3b>(y, x)[2] <= Rmax))
-                {
-                    color_rvb.at<uchar>(y, x) = 255;
-                }
-                else
-                {
-                    color_rvb.at<uchar>(y, x) = 0;
-                }
-            }
-        }
+        Mat canny, gaussian, color_gray;
 
         cv::cvtColor(img_crop, color_gray, cv::COLOR_BGR2GRAY);
         cv::GaussianBlur(color_gray, gaussian, Size(5, 5), 0);
         cv::Canny(gaussian, canny, 85, 85, 3);
-        imshow("Masque Gaussien + Canny", canny);
-        Mat conv_canny;
-        conv_canny.create(canny.rows, canny.cols, CV_8U);
-        imshow("Masque Gaussien + Canny", canny);
-        for (y = 0; y < canny.rows; y++)
-        {
-            for (x = 0; x < canny.cols; x++)
-            {
-                if ((frame.at<u_char>(y, x)[y] == 1)
-                {
-                    conv_canny.at<uchar>(y, x) = 255;
-                }
-                else
-                {
-                    conv_canny.at<uchar>(y, x) = 0;
-                }
-            }
-        }
-
-        Mat masque;
-        //bitwise_or(color_rvb, canny, masque);
-        bitwise_or(canny, color_rvb, masque);
-
-        //imshow("masque ", masque);              //affichage de l'image avec un filtrage RVB  et HSV
-
+        
         processingTime += cv::getTickCount() - tp0;
 
-        HoughLinesP(masque, lines, 1, CV_PI/180, 10, 5, 10);
+        HoughLinesP(canny, lines, 1, CV_PI/180, 10, 5, 10);
         float theta = 0;
         for( size_t i = 0; i < lines.size(); i++ )
         {
@@ -198,8 +147,8 @@ void *detect_ligne(void *threadid){
             }
         }
         //namedWindow( "Source", 1 );
-        //imshow( "Source", frame );
-        //imshow("croped", img_crop);
+        imshow( "Source", frame );
+        imshow("croped", img_crop);
         
         int key = waitKey(1);
         if (key == 27/*ESC*/)
