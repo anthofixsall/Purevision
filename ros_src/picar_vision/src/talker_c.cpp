@@ -159,8 +159,8 @@ int main(int argc, char **argv)
     }else if (flag_panneau == 1){
         pthread_mutex_lock(&mutex_panneau);
         flag_panneau = 0;
-        ss << type_panneau;
-        msg.data = ss.str();
+        //ss << type_panneau;
+        //msg.data = ss.str();
         pthread_mutex_unlock(&mutex_panneau);
     }else{
         //fprintf(stderr, "nothing \n");
