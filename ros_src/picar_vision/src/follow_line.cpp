@@ -2,109 +2,71 @@
 
 #include "follow_line.h"
 
+
 using namespace cv;
+using namespace std;
+
 using std::cerr;
 using std::cout;
 using std::endl;
 
 extern std::string direction_ligne;
-extern std::string type_panneau;
 
 extern int flag_direction;
-extern int flag_panneau;
 extern int data;
 
 extern pthread_mutex_t mutex_ligne;
 extern pthread_mutex_t mutex_panneau;
 
-void *PrintHello(void *threadid)
-{
-    long tid;
-    double temp;
-    double dtemps;
-    tid = (long)threadid;
-    struct timespec ts;
-    clock_gettime(CLOCK_REALTIME, &ts);
-    dtemps = (double)ts.tv_sec + (double)ts.tv_nsec * 0.000000001;
-    printf("Hello World! It's me, thread #%ld!\n", tid);
-    while (1)
-    {
-        dtemps += 2.0;
-        temp = Procedurecomptage(dtemps);
-        printf("It's me, thread  after 2 s #%ld!\n", tid);
-    }
-    pthread_exit(NULL);
-}
 
 void *detect_ligne(void *threadid)
 {
 
     Mat frame;
-    cout << "Opening camera..." << endl;
+    int64 t0 = cv::getTickCount();
+    int64 processingTime = 0;
+    int iRmin = 0, iRmax = 33, iVmin = 23, iVmax = 57, iBmin = 19, iBmax = 255; //delaration et definition des valeurs de seuils 
+
+
+    cout << "Opening camera..." << endl; //affichage pur débug 
     //VideoCapture capture(0);
     VideoCapture capture("udpsrc multicast-group=127.0.0.1 auto-multicast=true port=5000 ! application/x-rtp,media=video,payload=26,clock-rate=90000,encoding-name=JPEG ! rtpjpegdepay ! jpegdec ! videoconvert ! appsink",
                          CAP_GSTREAMER); // open the default camera
-    //VideoCapture capture("-v udpsrc multicast-group=127.0.0.1 auto-multicast=true port=5000 ! application/x-rtp, media=video, clock-rate=90000, payload=96 ! rtpjpegdepay ! jpegdec ! videoconvert ! autovideosink ! appsink", CAP_GSTREAMER); // open the first camera>>>>
-    //VideoCapture cap("udpsrc uri=udp://127.0.1.1:5000 auto-multicast=true ! application/x-rtp, media=video, encoding-name=H264 ! rtpjitterbuffer latency=300 ! rtph264depay ! decodebin ! videoconvert ! video/x-raw, format=BGR ! appsink", cv::CAP_GSTREAMER);
-    //VideoCapture capture("udpsrc port=5000 ! application/x-rtp,media=video,payload=26,clock-rate=90000,encoding-name=JPEG ! rtpjpegdepay ! jpegdec ! videoconvert ! appsink",CAP_GSTREAMER);
-    if (!capture.isOpened())
-    {
+
+    if (!capture.isOpened()){ // verfication si le flux vidéo c'est ouvert 
         cerr << "ERROR: Can't initialize camera capture" << endl;
         pthread_exit(NULL);
     }
 
-    size_t nFrames = 0;
-    bool enableProcessing = false;
-    int64 t0 = cv::getTickCount();
-    int64 processingTime = 0;
-
-
-    int iRmin = 0, iRmax = 33, iVmin = 23, iVmax = 57, iBmin = 19, iBmax = 255; // Rouge       
-    namedWindow("Trakbar Window", (450, 200));
-    //HSV ==> Ne fonctione pas avec la fonction findcontours ==> probleme format image non compatible
+    //creation d'une fennetre avec des options de seuillages RVB sous la forme de trackbar 
+    /*
+    namedWindow("Trakbar Window ligne", (450, 200));
     createTrackbar("Red min","Trakbar Window", &iRmin, 255);
     createTrackbar("Red max","Trakbar Window", &iRmax, 255);
-    
     createTrackbar("Green min","Trakbar Window", &iVmin, 255);
     createTrackbar("Green max","Trakbar Window", &iVmax, 255);
-    
     createTrackbar("Blue min","Trakbar Window", &iBmin, 255);
-    createTrackbar("Blue max","Trakbar Window", &iBmax, 255);
+    createTrackbar("Blue max","Trakbar Window", &iBmax, 255);*/
 
-
-    for (;;)
+    for (;;) // boucle infinie 
     {
+        int index_display = 0;
         capture >> frame; // read the next frame from camera
-        if (frame.empty())
+        if (frame.empty())  //verfication si le flux video n'est pas  vide 
         {
             cerr << "ERROR: Can't grab camera frame." << endl;
             break;
         }
-        nFrames++;
-        if (nFrames % 10 == 0)
-        {
-            const int N = 10;
-            int64 t1 = cv::getTickCount();
-            // cout << "Frames captured: " << cv::format("%5lld", (long long int)nFrames)
-            //     << "    Average FPS: " << cv::format("%9.1f", (double)getTickFrequency() * N / (t1 - t0))
-            //    << "    Average time per frame: " << cv::format("%9.2f ms", (double)(t1 - t0) * 1000.0f / (N * getTickFrequency()))
-            //    << "    Average processing time: " << cv::format("%9.2f ms", (double)(processingTime) * 1000.0f / (N * getTickFrequency()))
-            //   << std::endl;
-            t0 = t1;
-            processingTime = 0;
-        }
 
         Mat src, dst, color_dst;
-        std::vector<cv::Vec4i> lines;
+
         int64 tp0 = cv::getTickCount();
+        int nFrames;
 
         Mat img_crop;
         //cv::Canny(f rame, processed, 200, 1000, 5);
+
         //**************** Traitement RVB *****************
-
-         
-
-
         unsigned char Rmin, Rmax, Vmin, Vmax, Bmin, Bmax;
         int x, y;
         Rmin = (unsigned char)iRmin;
@@ -113,7 +75,6 @@ void *detect_ligne(void *threadid)
         Vmax = (unsigned char)iVmax;
         Bmin = (unsigned char)iBmin;
         Bmax = (unsigned char)iBmax;
-
         //**************** crop ***************************
         /*
         const int cropSize = 256;
@@ -121,13 +82,12 @@ void *detect_ligne(void *threadid)
         const int offsetH = (frame.rows - cropSize) / 2;
         const Rect roi(offsetW, offsetH, cropSize, cropSize);
         */
-
-        const Rect roi( (frame.rows /4) + 75,  (frame.cols / 2) , (frame.rows / 2)  , frame.cols / 4);
         
+        const Rect roi( (frame.rows /4) + 75,  (frame.cols / 2) , (frame.rows / 2)  , frame.cols / 4);
         img_crop = frame(roi).clone();
-
         //******************* traitement **********************
         Mat canny, gaussian, color_gray, color_rvb;
+        Mat masque;
 
         color_rvb.create(img_crop.rows, img_crop.cols, CV_8U);
         for (y = 0; y < img_crop.rows; y++)
@@ -144,58 +104,111 @@ void *detect_ligne(void *threadid)
                 }
             }
         }
+        //affichage du resultat du masque RVB
+        //imshow("Color rvb", color_rvb);
 
-        imshow("Color rvb", color_rvb);
+        //conversion de l'image crope (image d'origine sans traitement) en N&B
         cv::cvtColor(img_crop, color_gray, cv::COLOR_BGR2GRAY);
+        //Creation  d'un filtre gaussian de voisinage 5X5  avec l'imge en N&B
         cv::GaussianBlur(color_gray, gaussian, Size(5, 5), 0);
+        //Creation  d'un filtre canny  de voisinage 5X5  avec l'imge gaussiene
         cv::Canny(gaussian, canny, 85, 85, 3);
-        imshow("Masque Gaussien + Canny", canny);
-        Mat masque;
+       
+        //affichage des resultats 
+        //imshow("Masque Gaussien + Canny", canny);
+        //integration des données trouvé dans le spectre RVB et gaussian dans un masquage
         bitwise_or(color_rvb, gaussian, masque);
-        imshow("masque ", masque);              //affichage de l'image avec un filtrage RVB  et HSV
-        processingTime += cv::getTickCount() - tp0;
-        HoughLinesP(canny, lines, 1, CV_PI / 180, 10, 5, 10);
-        float theta = 0;
-        for (size_t i = 0; i < lines.size(); i++)
+        //affichage du masque 
+        //imshow("masque ", masque);  //affichage de l'image avec un filtrage RVB  et HSV
+        Mat canny_2;
+        cv::Canny(masque, canny_2, 85, 85, 3);
+        //imshow("canny_2 ", canny_2);
+        
+        float theta = 0; 
+        float rho = 0;
+        
+        std::vector<cv::Vec4i> linesP;
+        /*
+        HoughLinesP(canny, linesP, 1, CV_PI / 180, 10, 5, 10); //realisation d'une transformé de Hough
+
+        //HoughLinesP(canny, linesP, 1, CV_PI / 180, 50,0, 0 ); 
+        for (size_t i = 0; i < linesP.size(); i++) //balyage des des lignes trouvées 
         {
             Point p1, p2;
-            p1 = Point(lines[i][0], lines[i][1]);
-            p2 = Point(lines[i][2], lines[i][3]);
+            p1 = Point(linesP[i][0], linesP[i][1]);  
+            p2 = Point(linesP[i][2], linesP[i][3]);
 
-            line(img_crop, p1, p2, Scalar(0, 0, 255), 2);
-            theta += atan2((p2.y - p1.y), (p2.x - p1.x));
+            line(img_crop, p1, p2, Scalar(0, 0, 255), 2); //affichages des lignes trouvée dans l'image cropé 
+            theta += atan2((p2.y - p1.y), (p2.x - p1.x)); //recherche de l'angle theta sur 
             //fprintf(stderr, "theat %f  \n", theta);
-        }
+           
+            //Vec4i l = linesP[i];
+            //line( img_crop, Point(l[0], l[1]), Point(l[2], l[3]), Scalar(0,0,255), 3, LINE_AA);
+        }*/
+        
+        Mat img_crop_clone = img_crop.clone();
+        std::vector<cv::Vec2f> lines; // will hold the results of the detection
+        HoughLines(canny, lines, 1, CV_PI/180, 120, 0, 0 ); // runs the actual detection
+        // Draw the lines
+        for( size_t i = 0; i < lines.size(); i++ )
         {
-            float threshold = 6;
-            if (theta > threshold)
+            rho = lines[i][0], theta = lines[i][1];
+            Point pt1, pt2;
+            double a = cos(theta), b = sin(theta);
+            double x0 = a * rho, y0 = b * rho;
+            pt1.x = cvRound(x0 + 1000 *(-b));
+            pt1.y = cvRound(y0 + 1000 * (a));
+            pt2.x = cvRound(x0 - 1000 * (-b));
+            pt2.y = cvRound(y0 - 1000 * (a));
+            line( img_crop_clone, pt1, pt2, Scalar(0,0,255), 3, LINE_AA);
+            usleep(10000);
+            fprintf(stderr, "rho:%f,theta%f  \n",rho, theta);
+
+        }
+        processingTime += cv::getTickCount() - tp0; //indice de temps de traitement 
+        {
+            //float threshold = 6; 
+            if ((theta > 0) && (theta < (3.14 / 2)))
             {
-                //fprintf(stderr, " left \n");
+                fprintf(stderr, " right \n");
+                pthread_mutex_lock(&mutex_ligne);
+                direction_ligne = 1;
+                flag_direction = 1;
+                pthread_mutex_unlock(&mutex_ligne);
+
+            }
+            else if ( (theta > (3.14 / 2)) &&(theta < 3.14 ))
+            {
+                fprintf(stderr, " left \n");
                 pthread_mutex_lock(&mutex_ligne);
                 direction_ligne = "left";
                 flag_direction = 1;
                 pthread_mutex_unlock(&mutex_ligne);
-            }
-            else if (theta < threshold)
-            {
-                //fprintf(stderr, " right \n");
-                pthread_mutex_lock(&mutex_ligne);
-                direction_ligne = "right";
-                flag_direction = 1;
-                pthread_mutex_unlock(&mutex_ligne);
-            }
-            else if (abs(theta) < threshold)
-            {
-                //fprintf(stderr, " straight \n");
-                pthread_mutex_lock(&mutex_ligne);
-                direction_ligne = "straight";
-                flag_direction = 1;
-                pthread_mutex_unlock(&mutex_ligne);
+
+            }else{
+                direction_ligne = "";
             }
         }
+
         //namedWindow( "Source", 1 );
         //imshow( "Source", frame );
-        imshow("croped", img_crop);
+        //imshow("HoughLinesP", img_crop);
+        //imshow("HoughLines", img_crop_clone);
+
+        nFrames++; 
+        //option de test pour analyser le fps de traitement 
+        if (nFrames % 10 == 0)
+        {
+            const int N = 10;
+            int64 t1 = cv::getTickCount();
+            // cout << "Frames captured: " << cv::format("%5lld", (long long int)nFrames)
+            //     << "    Average FPS: " << cv::format("%9.1f", (double)getTickFrequency() * N / (t1 - t0))
+            //    << "    Average time per frame: " << cv::format("%9.2f ms", (double)(t1 - t0) * 1000.0f / (N * getTickFrequency()))
+            //    << "    Average processing time: " << cv::format("%9.2f ms", (double)(processingTime) * 1000.0f / (N * getTickFrequency()))
+            //   << std::endl;
+            t0 = t1;
+            processingTime = 0;
+        }
 
         int key = waitKey(1);
         if (key == 27 /*ESC*/)

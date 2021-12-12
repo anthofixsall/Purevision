@@ -42,7 +42,9 @@ src/comptage.cpp
 target_link_libraries(talker_c ${catkin_LIBRARIES} ${OpenCV_LIBS}  pthread)
 add_dependencies(talker_c picar_vision_generate_messages_cpp)
 
-
+catkin_install_python(PROGRAMS scripts/listener.py
+  DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
 
 
 

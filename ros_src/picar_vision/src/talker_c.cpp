@@ -47,6 +47,7 @@ int flag_direction = 0;
 int flag_panneau = 0;
  
 int data = 0;
+int data_panneau = 0;
 
  pthread_mutex_t mutex_ligne = PTHREAD_MUTEX_INITIALIZER;
  pthread_mutex_t mutex_panneau = PTHREAD_MUTEX_INITIALIZER;
@@ -84,18 +85,12 @@ int main(int argc, char **argv)
          fprintf(stderr,"\n mutex init ligne failed\n");
     }
 
-        rc = pthread_create(&threads[0], NULL, PrintHello, (void *)1);
-        if (rc){
-            printf("ERROR; return code from pthread_create() is %d\n", rc);
-            exit(-1);
-            }
-    
+
         rc = pthread_create(&threads[1], NULL, detect_panneau, (void *)4);
         if (rc){
           printf("ERROR; return code from pthread_create() is %d\n", rc);
           exit(-1);
         }
-        //direction_ligne = "test";
 
         rc = pthread_create(&threads[2], NULL, detect_ligne, (void *)4);
         if (rc){
@@ -149,6 +144,7 @@ int main(int argc, char **argv)
   {
     std_msgs::String msg;
     std::stringstream ss;
+
     //ss << "hello world " << count;
     if(flag_direction == 1){
         pthread_mutex_lock(&mutex_ligne);
@@ -159,8 +155,21 @@ int main(int argc, char **argv)
     }else if (flag_panneau == 1){
         pthread_mutex_lock(&mutex_panneau);
         flag_panneau = 0;
-        //ss << type_panneau;
-        //msg.data = ss.str();
+         switch (data_panneau)
+         {
+         case 0:
+              //totod
+           break;
+          case 1:
+            ss << "stop";
+            msg.data = ss.str();
+          case 2:
+            ss << "cedez";
+            msg.data = ss.str();       
+           break;        
+         default:
+           break;
+         }
         pthread_mutex_unlock(&mutex_panneau);
     }else{
         //fprintf(stderr, "nothing \n");

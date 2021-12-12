@@ -1,0 +1,28 @@
+CHAINE DE CARACTÈRE ENTRANTE : 
+
+[01,DROI,0.7]
+
+on parse les données en trois sous chaines : 
+01
+DROI
+0.7
+
+puis on prend chacune de ces sous-chaines pour analyser leur contenu caractère par caractère
+
+Bloc 1 : (Sous-Chaîne 1)
+------------------------------
+Si présence de '0' '1' alors = "01"  
+Si "01" alors = Ligne
+
+
+Bloc 2 :
+------------------
+Si présence de 'D' 'R' 'O' 'I' alors = "DROI"
+Si "DROI" alors = Droite
+
+
+Bloc 3 :
+-----------------
+Si présence de '0' '.' '7' alors = "0.7"
+Si "0.7" alors = Angle de 7°
+

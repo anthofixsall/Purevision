@@ -194,11 +194,16 @@ donner acces au gpio
 groupadd gpio
 usermod -a -G gpio ubuntu
 sudo adduser ubuntu gpio
+sudo adduser ubuntu i2c
+sudo adduser ubuntu kmem
 
 sudo chown root.gpio /dev/gpiomem
-sudo chown root.gpio /dev/mem
+sudo chown root.kmem /dev/mem
+sudo chown root.i2c /dev/i2c-1
+
 sudo chmod g+rw /dev/gpiomem
 sudo chmod g+rw /dev/mem
+sudo chmod g+rw /dev/i2c-1
 ```
 
 Pour éviter d ela refaire à chaque fois, il est possible de l'ecire en dur avec les commandes suivantes:
@@ -206,8 +211,10 @@ Pour éviter d ela refaire à chaque fois, il est possible de l'ecire en dur ave
 ```
 echo "sudo chown root.gpio /dev/gpiomem" >> ~/.bashrc
 echo "sudo chmod g+rw /dev/gpiomem" >> ~/.bashrc
-echo "sudo chown root.gpio /dev/mem " >> ~/.bashrc
+echo "sudo chown root.kmem /dev/mem " >> ~/.bashrc
 echo "sudo chmod g+rw /dev/mem" >> ~/.bashrc
+echo "sudo chown root.i2c /dev/i2c-1 " >> ~/.bashrc
+echo "sudo chmod g+rw /dev/i2c-1" >> ~/.bashrc
 ```
 
 voire également les liens suivants :
@@ -218,3 +225,163 @@ https://forums.raspberrypi.com/viewtopic.php?t=58782
 
 https://raspberrypi.stackexchange.com/questions/40105/access-gpio-pins-without-root-no-access-to-dev-mem-try-running-as-root
 ----
+
+### lancement de l'environement ROS 
+
+Aller dans votre espace de travail 
+```
+catkin_isolated
+```
+$catkin_isolated dans le répertoire de travail 
+```
+~/catkin_ws
+```
+
+```
+source devel_isolated/setup.bash
+```
+```
+export ROS_HOSTNAME=localhost avant chaque commande qui vont suivre
+```
+Lancement de ros 
+``` 
+roscore
+```
+Ouvir un nouveau  terminal 
+```
+ rosrun beginnner subpub4
+```
+Ouvir un nouveau  terminal 
+```
+rosrun picar_4wd control_motor.py
+```
+Ouvir un nouveau  terminal 
+```
+rosrun pur-vision talker
+```
+
+
+
+# Pour aller plus loin 
+
+## pour rendre plus rapide le démarage du systeme 
+
+Vous pouvez etudier le temps de démarage 
+```
+systemd-analyze blame
+```
+normalement  le systeme suivant prend du temps, il est possible de le désativé via la commande suivante :
+
+```
+sudo systemctl disable NetworkManager-wait-online.service
+```
+
+Il est possible de le reactivé
+
+```
+sudo systemctl enable NetworkManager-wait-online.service
+```
+
+## overclocking 
+
+Il est possible d'amelore les performances de la picar avec une augementation de la tension
+Cette étape demande d'avoir un systeme de refroidissement conséquent 
+
+```
+over_voltage=4
+arm_freq=1950
+```
+
+## Création de la pipeline de transmission
+
+Deux possibilité s'offre a vous :
+* Création de la pipeline de transmission depuis le terminal linux
+* Création de la pipeline de transmission au démarrage grâce à un script
+### ligne de commande
+```
+2 clients : raspivid -t 0 -w 640 -h 480 -fps 25 -b 1200000 -p 0,0,640,480 -o | gst-launch-1.0 -v v4l2src device=/dev/video0 num-buffers=-1 ! video/x-raw, width=640, height=480 ! videoflip method=rotate-180 ! videoconvert ! jpegenc ! rtpjpegpay  ! multiudpsink clients=127.0.0.1:5000,127.0.0.1:5001 auto-multicast=true
+3 clients : raspivid -t 0 -w 640 -h 480 -fps 25 -b 1200000 -p 0,0,640,480 -o | gst-launch-1.0 -v v4l2src device=/dev/video0 num-buffers=-1 ! video/x-raw, width=640, height=480 ! videoflip method=rotate-180 ! videoconvert ! jpegenc ! rtpjpegpay  ! multiudpsink clients=127.0.0.1:5000,127.0.0.1:5001,IP_client_externe:5002 auto-multicast=true
+```
+
+### Création d'un script pour creer le flux vidéo automatiquement au démarage 
+
+Passer en mode root
+Si pas encore fait change le mot de passe avec :
+
+```
+sudo passwd root
+```
+Activer le mode root
+```
+su root
+```
+Création du fichier dans le répertoire init.d
+```
+cd /etc/init.d/
+gedit pipeline.sh & 
+```
+
+```
+#!/bin/sh
+#
+### BEGIN INIT INFO
+# Provides:          Nom_Script.sh
+# Required-Start:    $all
+# Required-Stop:
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: description du programme
+### END INIT INFO
+
+raspivid -t 0 -w 640 -h 480 -fps 25 -b 1200000 -p 0,0,640,480 -o | gst-launch-1.0 -v v4l2src device=/dev/video0 num-buffers=-1 ! video/x-raw, width=640, height=480 ! videoflip method=rotate-180 ! videoconvert ! jpegenc ! rtpjpegpay  ! multiudpsink clients=127.0.0.1:5000,127.0.0.1:5001 auto-multicast=true
+ 
+exit 0
+```
+Pour lancer le script au démarrage on donne les droit d'éxécution est on créé un lien avec les fichier de démarrage
+
+```
+cd /etc/init.d/
+chmod +x Nom_Script.sh
+chmod 755 Nom_Script.sh 
+update-rc.d Nom_Script.sh defaults 
+```
+
+vérifier que le script est dans les fichier de boot
+```
+cd ..
+find -iname '*Nom_Script*' 
+```
+
+Enléver tous les liens
+```
+cd /etc/init.d/
+update-rc.d Nom_Script.sh remove 
+```
+
+Désactiver le script
+```
+cd /etc/init.d/
+update-rc.d Nom_Script.sh disable 
+```
+
+vérifier que le script n'est plus dans les fichier de boot
+```
+cd ..
+find -iname '*Nom_Script*' 
+```
+
+## Création de la pipeline de réception
+### Dans la console :
+``` 
+gst-launch-1.0 -v udpsrc auto-multicast=true port=Port_Cient ! application/x-rtp, media=video, clock-rate=90000, payload=96 ! rtpjpegdepay ! jpegdec ! videoconvert ! autovideosink
+```
+
+### Depuis un code OpenCv :
+```
+VideoCapture cap("udpsrc auto-multicast=true port=Port_Cient ! application/x-rtp, media=video, clock-rate=90000, payload=96 ! rtpjpegdepay ! jpegdec ! videoconvert ! appsink",CAP_GSTREAMER);
+```
+
+### Depuis une IHM Qt :
+```
+m_mediaPlayer->setMedia(QUrl("gst-pipeline : -e -v udpsrc port=Port_Cient ! application/x-rtp, encoding-name=JPEG,payload=26 ! rtpjpegdepay ! jpegparse ! jpegdec ! autovideosink"));
+```

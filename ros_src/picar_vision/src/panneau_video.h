@@ -16,6 +16,9 @@
 #include <iostream>
 #include "data_ros.h"
 
+using namespace cv;
+using namespace std;
+
 void *detect_panneau(void *threadid);
    
 
