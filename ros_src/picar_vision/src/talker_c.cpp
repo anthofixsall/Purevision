@@ -42,6 +42,7 @@
 
 std::string direction_ligne = "";
 std::string type_panneau = "";
+std::string type_panneau_stop = "3";
 
 int flag_direction = 0;
 int flag_panneau = 0;
@@ -85,7 +86,6 @@ int main(int argc, char **argv)
          fprintf(stderr,"\n mutex init ligne failed\n");
     }
 
-
         rc = pthread_create(&threads[1], NULL, detect_panneau, (void *)4);
         if (rc){
           printf("ERROR; return code from pthread_create() is %d\n", rc);
@@ -127,7 +127,7 @@ int main(int argc, char **argv)
 
 
 // %Tag(PUBLISHER)%
-  ros::Publisher chatter_pub = n.advertise<std_msgs::String>("chatter_c", 1000);
+  ros::Publisher chatter_pub = n.advertise<std_msgs::String>("Decision", 1000);
 // %EndTag(PUBLISHER)%
 
 // %Tag(LOOP_RATE)%
@@ -155,22 +155,12 @@ int main(int argc, char **argv)
     }else if (flag_panneau == 1){
         pthread_mutex_lock(&mutex_panneau);
         flag_panneau = 0;
-         switch (data_panneau)
-         {
-         case 0:
-              //totod
-           break;
-          case 1:
-            ss << "stop";
+         //if(data_panneau == type_panneau_stop){
+            ss << "3";
             msg.data = ss.str();
-          case 2:
-            ss << "cedez";
-            msg.data = ss.str();       
-           break;        
-         default:
-           break;
-         }
-        pthread_mutex_unlock(&mutex_panneau);
+
+         //}
+        pthread_mutex_unlock(&mutex_panneau); 
     }else{
         //fprintf(stderr, "nothing \n");
     }

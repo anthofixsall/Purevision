@@ -5,29 +5,25 @@ using namespace cv;
 using namespace std;
 
 extern pthread_mutex_t mutex_panneau ;
+extern std::string type_panneau;
 extern int data_panneau;
 extern int flag_panneau;
 
 Mat imgOri, imgGray, imgCanny, imgTraite, imgGauss, imgDilat, imgEro, imgCoupe, imgMasque;
 vector<Point> InitPoints, docPoints;
+//VideoCapture camera(0);
+ VideoCapture camera("udpsrc multicast-group=127.0.0.1 auto-multicast=true port=5001 ! application/x-rtp,media=video,payload=26,clock-rate=90000,encoding-name=JPEG ! rtpjpegdepay ! jpegdec ! videoconvert ! appsink",
+                         CAP_GSTREAMER); // open the default camera
+
 
 //variables pour traitement HSV
 Mat imgHSV, masK ;
-
-//int hmin = 121, smin = 147, vmin = 0;
-//int hmax = 179, smax = 255, vmax = 255;
-
-int hmin = 139, smin = 38, vmin = 136;
-int hmax = 238, smax = 202, vmax = 255;
-
+int hmin = 121, smin = 25, vmin = 0;
+int hmax = 179, smax = 255, vmax = 255;
 
 //variables pour Traitement RVB
 Mat imgCree;
-//int iRmin = 205, iRmax = 255, iVmin = 0, iVmax = 155, iBmin = 0, iBmax = 255; 
-int iRmin = 196, iRmax = 255, iVmin = 103, iVmax = 202, iBmin = 111, iBmax = 188; 
-
-
-VideoCapture camera("udpsrc multicast-group=127.0.0.1 auto-multicast=true port=5001 ! application/x-rtp,media=video,payload=26,clock-rate=90000,encoding-name=JPEG ! rtpjpegdepay ! jpegdec ! videoconvert ! appsink", CAP_GSTREAMER); // open the default camera
+int iRmin = 108, iRmax = 157, iVmin = 0, iVmax = 108, iBmin = 58, iBmax = 255; 
 
 
 vector<Point> getContours(Mat imgDilat);
@@ -35,69 +31,68 @@ void ModCouleurHSV(int, void*);
 void ModCouleurRVB(int, void*);
 
 void *detect_panneau(void *threadid){
-
-
-
-    for(;;);
+    for(;;)
     {
-
-	namedWindow("Trakbar Window panneau", (450, 200));
-			/*
-    createTrackbar("Red min","Trakbar Window", &iRmin, 255, NULL);
-    createTrackbar("Red max","Trakbar Window", &iRmax, 255, NULL);
-    createTrackbar("Green min","Trakbar Window", &iVmin, 255, NULL);
-    createTrackbar("Green max","Trakbar Window", &iVmax, 255, NULL);
-    createTrackbar("Blue min","Trakbar Window", &iBmin, 255, NULL);
-    createTrackbar("Blue max","Trakbar Window", &iBmax, 255, NULL);
-	createTrackbar("Hue min","Trakbar Window", &hmin, 255, NULL);
-    createTrackbar("Hue max","Trakbar Window", &hmax, 255, NULL);
-    createTrackbar("Saturation min","Trakbar Window", &smin, 255, NULL);
-    createTrackbar("Saturation max","Trakbar Window", &smax, 255, NULL);
-    createTrackbar("Value min","Trakbar Window", &vmin, 255, NULL);
-    createTrackbar("Value max","Trakbar Window", &vmax, 255, NULL);*/
-
-        camera.read(imgOri);
-		if (!camera.isOpened()){
-			cerr << "ERROR: Can't initialize camera capture" << endl;
-            pthread_exit(NULL);
-		}
-
-		camera >> imgOri;
-		imgTraite = imgOri;
 		
-		imshow("Visualisation Image Originale", imgOri);
-        ModCouleurHSV(0,0);
-		ModCouleurRVB(0,0);
+		namedWindow("Trakbar Window", (450, 200));
+		createTrackbar("Red min","Trakbar Window", &iRmin, 255);
+		createTrackbar("Red max","Trakbar Window", &iRmax, 255);
+		createTrackbar("Green min","Trakbar Window", &iVmin, 255);
+		createTrackbar("Green max","Trakbar Window", &iVmax, 255);
+		createTrackbar("Blue min","Trakbar Window", &iBmin, 255);
+		createTrackbar("Blue max","Trakbar Window", &iBmax, 255);
 
-		if (!masK.empty() && !imgCree.empty())
+		createTrackbar("Hue min","Trakbar Window", &hmin, 255);
+		createTrackbar("Hue max","Trakbar Window", &hmax, 255);
+		createTrackbar("Saturation min","Trakbar Window", &smin, 255);
+		createTrackbar("Saturation max","Trakbar Window", &smax, 255);
+		createTrackbar("Value min","Trakbar Window", &vmin, 255);
+		createTrackbar("Value max","Trakbar Window", &vmax, 255);
+
+
+		while(camera.isOpened())
 		{
-			bitwise_or(imgCree, masK, imgMasque);
-			InitPoints = getContours(imgMasque);
-			if (InitPoints.size() != 3 && InitPoints.size() != 8)
+			camera.read(imgOri);	
+
+			imgTraite = imgOri;
+
+			ModCouleurHSV(0,0);
+			ModCouleurRVB(0,0);
+
+			if (!masK.empty() && !imgCree.empty())
 			{
-				fprintf(stderr, "Aucun Panneaux detecté\n");
-				pthread_mutex_lock(&mutex_panneau);
-                data_panneau = 0;			
-                flag_panneau = 0;
-                pthread_mutex_unlock(&mutex_panneau);
+				bitwise_or(imgCree, masK, imgMasque);
+				InitPoints = getContours(imgMasque);
+				if (InitPoints.size() != 3 && InitPoints.size() != 8)
+				{
+					//fprintf(stderr, "Aucun Panneaux detecté\n");
+				}
+				else if (InitPoints.size() == 3)
+				{
+					fprintf(stderr, "Cedez le Passage detecté\n");
+					pthread_mutex_lock(&mutex_panneau);
+                    type_panneau = "3";
+                    flag_panneau = 1;
+                    pthread_mutex_unlock(&mutex_panneau);
+
+				}
+				else if (InitPoints.size() == 8)
+				{
+					fprintf(stderr, "Stop detecté\n");
+					pthread_mutex_lock(&mutex_panneau);
+                    type_panneau = "3";
+                    flag_panneau = 1;
+                    pthread_mutex_unlock(&mutex_panneau);
+				}
 			}
-			else if (InitPoints.size() == 3)
+			//imshow("Visualisation Image Originale", imgOri);
+
+			if(waitKey(1) == 'q')
 			{
-				fprintf(stderr, "Cedez le Passage detecté\n");
-				pthread_mutex_lock(&mutex_panneau);
-                data_panneau = 1;
-                flag_panneau = 0;
-                pthread_mutex_unlock(&mutex_panneau);
-			}
-			else if (InitPoints.size() == 8)
-			{
-				fprintf(stderr, "Stop detecté\n");
-				pthread_mutex_lock(&mutex_panneau);
-                data_panneau = 2;
-                flag_panneau = 0;
-                pthread_mutex_unlock(&mutex_panneau);
+				pthread_exit(NULL);
 			}
 		}
+	
     }
     pthread_exit(NULL);
 }
@@ -115,7 +110,7 @@ void ModCouleurHSV(int, void*)
 	inRange (imgHSV, lower, upper, masK);
 
 	//imshow("Image en HSV", imgHSV);
-    imshow("masque HSV", masK);
+    //imshow("masque HSV", masK);
 }
 
 void ModCouleurRVB(int, void*)
@@ -148,11 +143,12 @@ void ModCouleurRVB(int, void*)
         }
     }
 	imshow("masque RVB", imgCree);
+    imshow("origine", imgOri);
 }
 
 vector<Point> getContours(Mat imgDilat) 
 {
-	vector<vector<Point>> contours;
+		vector<vector<Point>> contours;
 	vector<Vec4i> hierarchy; // vector de 4 integ ( (4*valeurs)
 	
 	//											methode    //  type de aproximation
@@ -175,7 +171,7 @@ vector<Point> getContours(Mat imgDilat)
 		if (area > 1500 )
 		{
 			float peri = arcLength(contours[i], true);	
-			approxPolyDP(contours[i],conPoly[i], 0.013*peri, true);   
+			approxPolyDP(contours[i],conPoly[i], 0.0175 * peri, true);   
 			
 			boundRect[i] = boundingRect(conPoly[i]);
 			//Conditions pour Panneaux Stop 
@@ -204,7 +200,7 @@ vector<Point> getContours(Mat imgDilat)
 				
 				Rect mesROI(boundRect[i].x,boundRect[i].y,boundRect[i].width,boundRect[i].height);
                 imgCoupe = imgOri(mesROI);
-				imshow("Visualisation Image Coupe avant traitement", imgCoupe);
+			    imshow("Visualisation Image Coupe avant traitement", imgCoupe);
 				// identification avec texte
 				putText(imgTraite, "Panneau Ceder Passage", {boundRect[i].x, boundRect[i].y}, FONT_ITALIC, 0.5, Scalar(0,255,0), 1);
             }

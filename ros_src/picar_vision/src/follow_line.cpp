@@ -39,14 +39,14 @@ void *detect_ligne(void *threadid)
     }
 
     //creation d'une fennetre avec des options de seuillages RVB sous la forme de trackbar 
-    /*
+    
     namedWindow("Trakbar Window ligne", (450, 200));
     createTrackbar("Red min","Trakbar Window", &iRmin, 255);
     createTrackbar("Red max","Trakbar Window", &iRmax, 255);
     createTrackbar("Green min","Trakbar Window", &iVmin, 255);
     createTrackbar("Green max","Trakbar Window", &iVmax, 255);
     createTrackbar("Blue min","Trakbar Window", &iBmin, 255);
-    createTrackbar("Blue max","Trakbar Window", &iBmax, 255);*/
+    createTrackbar("Blue max","Trakbar Window", &iBmax, 255);
 
     for (;;) // boucle infinie 
     {
@@ -161,7 +161,7 @@ void *detect_ligne(void *threadid)
             pt2.x = cvRound(x0 - 1000 * (-b));
             pt2.y = cvRound(y0 - 1000 * (a));
             line( img_crop_clone, pt1, pt2, Scalar(0,0,255), 3, LINE_AA);
-            usleep(10000);
+            //usleep(10000);
             fprintf(stderr, "rho:%f,theta%f  \n",rho, theta);
 
         }
@@ -170,18 +170,18 @@ void *detect_ligne(void *threadid)
             //float threshold = 6; 
             if ((theta > 0) && (theta < (3.14 / 2)))
             {
-                fprintf(stderr, " right \n");
+                //fprintf(stderr, " right \n");
                 pthread_mutex_lock(&mutex_ligne);
-                direction_ligne = 1;
+                direction_ligne = "4";
                 flag_direction = 1;
                 pthread_mutex_unlock(&mutex_ligne);
 
             }
             else if ( (theta > (3.14 / 2)) &&(theta < 3.14 ))
             {
-                fprintf(stderr, " left \n");
+                //fprintf(stderr, " left \n");
                 pthread_mutex_lock(&mutex_ligne);
-                direction_ligne = "left";
+                direction_ligne = "5";
                 flag_direction = 1;
                 pthread_mutex_unlock(&mutex_ligne);
 
@@ -193,7 +193,7 @@ void *detect_ligne(void *threadid)
         //namedWindow( "Source", 1 );
         //imshow( "Source", frame );
         //imshow("HoughLinesP", img_crop);
-        //imshow("HoughLines", img_crop_clone);
+        imshow("HoughLines", img_crop_clone);
 
         nFrames++; 
         //option de test pour analyser le fps de traitement 

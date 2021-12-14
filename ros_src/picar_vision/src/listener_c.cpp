@@ -76,7 +76,7 @@ int main(int argc, char **argv)
    * away the oldest ones.
    */
 // %Tag(SUBSCRIBER)%
-  ros::Subscriber sub = n.subscribe("chatter_c", 1000, chatterCallback);
+  ros::Subscriber sub = n.subscribe("Decision", 1000, chatterCallback);
 // %EndTag(SUBSCRIBER)%
 
   /**
